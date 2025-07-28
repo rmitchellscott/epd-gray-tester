@@ -140,12 +140,17 @@ class EPDTester:
         draw = ImageDraw.Draw(img)
         
         try:
-            # Try to load Liberation Serif font (similar to Times/Garamond)
-            font_size_scaled = self.font_size * scale
-            font = ImageFont.truetype("/usr/share/fonts/truetype/liberation/LiberationSerif-Regular.ttf", font_size_scaled)
+            # Try to load EB Garamond font
+            # Convert points to pixels: pixels = points * DPI / 72
+            font_size_pixels = int(self.font_size * self.dpi / 72)
+            font_size_scaled = font_size_pixels * scale
+            font = ImageFont.truetype("/usr/share/fonts/opentype/ebgaramond/EBGaramond12-Regular.otf", font_size_scaled)
         except:
-            # Fallback to default font
-            font = ImageFont.load_default()
+            # Fallback to Liberation Serif, then default
+            try:
+                font = ImageFont.truetype("/usr/share/fonts/truetype/liberation/LiberationSerif-Regular.ttf", font_size_scaled)
+            except:
+                font = ImageFont.load_default()
         
         # Calculate text position (centered)
         bbox = draw.textbbox((0, 0), self.test_text, font=font)
@@ -200,22 +205,58 @@ class EPDTester:
         section.paste(strip3, (0, current_y))
         current_y += strip_height + spacing
         
+        # Helper function to add text labels with AA/dithering applied
+        def add_text_label(y_pos, label_text):
+            # Create a temporary image for the label text with AA/dithering processing
+            label_width = 350  # Sufficient width for labels
+            label_height = text_height  # Same height as text samples
+            
+            # Create high-res image for antialiasing
+            scale = 4
+            label_img = Image.new('L', (label_width * scale, label_height * scale), 255)
+            label_draw = ImageDraw.Draw(label_img)
+            
+            try:
+                # Use 10pt Liberation Sans for text labels
+                label_font_size = int(10 * self.dpi * scale / 72)
+                font = ImageFont.truetype("/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf", label_font_size)
+            except:
+                font = ImageFont.load_default()
+            
+            # Draw the label text
+            label_draw.text((8 * scale, 0), label_text, fill=0, font=font)
+            
+            # Scale down for antialiasing
+            label_img = label_img.resize((label_width, label_height), Image.LANCZOS)
+            
+            # Apply same processing as text samples based on bit depth
+            if bit_depth < 4:
+                label_img = self.apply_dithering(label_img, bit_depth)
+            else:
+                label_img = self.quantize_to_bits(label_img, bit_depth)
+            
+            # Paste the processed label onto the section
+            section.paste(label_img, (0, y_pos))
+        
         # 4. Text - no AA, no dithering
         text1 = self.create_text_sample(self.width, text_height, antialiased=False, 
                                        dithered=False, target_bits=bit_depth)
         section.paste(text1, (0, current_y))
+        add_text_label(current_y, "no AA, no dithering")
         current_y += text_height + spacing
         
-        # 5. Text - no AA, with dithering (if not native)
-        text2 = self.create_text_sample(self.width, text_height, antialiased=False, 
+        # 5. Text - with AA, with dithering (if not native)
+        text2 = self.create_text_sample(self.width, text_height, antialiased=True, 
                                        dithered=(bit_depth < 4), target_bits=bit_depth)
         section.paste(text2, (0, current_y))
+        add_text_label(current_y, "AA, dithering")
         current_y += text_height + spacing
         
         # 6. Text - AA, no dithering
         text3 = self.create_text_sample(self.width, text_height, antialiased=True, 
                                        dithered=False, target_bits=bit_depth)
         section.paste(text3, (0, current_y))
+        add_text_label(current_y, "AA, no dithering")
         
         return section
     
@@ -236,11 +277,14 @@ class EPDTester:
             # Add section label
             draw = ImageDraw.Draw(test_image)
             try:
-                font = ImageFont.truetype("/usr/share/fonts/truetype/liberation/LiberationSerif-Regular.ttf", 20)
+                # Use 20pt Liberation Sans for bit numerals (sans-serif)
+                label_font_size = int(20 * self.dpi / 72)
+                font = ImageFont.truetype("/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf", label_font_size)
             except:
+                # Fallback to default
                 font = ImageFont.load_default()
             
-            label = f"{bit_depth}-bit grayscale"
+            label = f"{bit_depth}"
             draw.text((10, y_offset + 10), label, fill=0, font=font)
         
         # Save the image

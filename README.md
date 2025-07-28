@@ -30,7 +30,7 @@ DISPLAY_WIDTH=1200 DISPLAY_HEIGHT=1600 DISPLAY_DPI=200 FONT_SIZE=12 docker-compo
 - `DISPLAY_WIDTH`: Display width in pixels (default: 1404)
 - `DISPLAY_HEIGHT`: Display height in pixels (default: 1872)
 - `DISPLAY_DPI`: Display DPI (default: 226)
-- `FONT_SIZE`: Font size in points (default: 10)
+- `FONT_SIZE`: Font size in points (default: 10) - automatically converted to pixels based on DPI
 
 ### Output
 
