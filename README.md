@@ -6,6 +6,7 @@ A Python application to generate test images for e-paper displays, specifically 
 
 - Generates 4 equal-height sections, each simulating a different colorspace
 - Each section includes:
+  - "native" grayscale strip
   - 16-color grayscale strip (solid blocks, no dithering)
   - 16-color grayscale strip (gradient with dithering)
   - Text samples with different AA/dithering combinations
