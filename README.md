@@ -45,3 +45,8 @@ The generated test image will be saved to `./output/epd_grayscale_test.png`
 - **4-bit section**: 16 gray levels (native, no dithering needed)
 
 Each section demonstrates how content appears when rendered at different bit depths, helping optimize content for e-paper displays.
+
+## License
+Copyright (C) 2025 Mitchell Scott
+
+Licensed under the GNU General Public License v3.0.
